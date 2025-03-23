@@ -6,4 +6,4 @@ Before using chabot.py or filler_word.py, do the following:
 
 - Then download llama3.2 by using the "ollama run llama3.2" command in the terminal or command prompt.
 
-- Navigate to the project directory and download all dependencides by running "pip install -r requirements.txt" in the terminal or command prompt. 
+- Navigate to the project directory and download all dependencies by running "pip install -r requirements.txt" in the terminal or command prompt. 
