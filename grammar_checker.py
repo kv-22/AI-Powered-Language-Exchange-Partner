@@ -1,33 +1,37 @@
 from ollama import chat
 from ollama import ChatResponse
+from groq import Groq
+import os
+import re
 
 user_input = input("\n: ")
 
-# prompt = f"""
-# Is the input grammatically correct?
-
-# Input: {user_input}
-# """
-
 prompt = f"""
-You are a grammar checker for language learners. 
-Given the following input, determine if there are any grammatical errors. 
-If the input is correct, respond with "No errors found. You're doing great!" 
-If there are any mistakes, explain what the error is and provide a suggestion for correction.
-
-Here are some examples:
-
-Input: She go to the park.
-Response: She goes to the park.
-
-Input: I can speaks English.
-Response: I can speak English.
-
-Input: I read a book.
-Response: No errors found. You're doing great!
+Is the input grammatically correct?
 
 Input: {user_input}
 """
+
+# prompt = f"""
+# You are a grammar checker for language learners. 
+# Given the following text, determine if it contains grammatical errors. 
+# If there are no grammatical errors, respond with "No errors found. You're doing great!" 
+# If there are grammatical errors, explain what the errors are and provide a suggestion for correction.
+
+# Here are some examples:
+
+# Text: She go to the park.
+# Response: She goes to the park.
+
+# Text: I can speaks English.
+# Response: I can speak English.
+
+# Text: I read a book.
+# Response: No errors found. You're doing great!
+
+# Text: {user_input}
+# Response:
+# """
 
 # print(prompt)
 
@@ -38,5 +42,21 @@ messages = [
   }
 ]
 
-response: ChatResponse = chat(model='llama3.2', messages=messages)
-print(response.message.content)
+# with ollama
+# response: ChatResponse = chat(model='llama3.2', messages=messages)
+# print(response.message.content)
+
+# with groq
+client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+
+chat_completion = client.chat.completions.create(
+    messages=messages,
+    model="llama-3.3-70b-versatile" # "llama-3.3-70b-versatile or deepseek-r1-distill-llama-70b"
+)
+
+response = chat_completion.choices[0].message.content
+
+# if using deepseek remove think tags
+# response = re.sub(r'<think>.*?</think>', '', response, flags=re.DOTALL).strip()
+
+print(response)

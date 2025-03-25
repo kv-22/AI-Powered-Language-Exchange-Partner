@@ -1,8 +1,10 @@
 from pydub import AudioSegment
-import whisper
-import re
 from ollama import chat
 from ollama import ChatResponse
+from groq import Groq
+import os
+import whisper
+import re
 
 # define filler words
 filler_words = {
@@ -82,6 +84,22 @@ messages = [
   }
 ]
 
-response: ChatResponse = chat(model='llama3.2', messages=messages)
-print("\n")
-print(response.message.content)
+# with ollama
+# response: ChatResponse = chat(model='llama3.2', messages=messages)
+# print("\n")
+# print(response.message.content)
+
+# with groq
+client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+
+chat_completion = client.chat.completions.create(
+    messages=messages,
+    model="llama-3.3-70b-versatile" # "llama-3.3-70b-versatile or deepseek-r1-distill-llama-70b"
+)
+
+response = chat_completion.choices[0].message.content
+
+# if using deepseek remove think tags
+# response = re.sub(r'<think>.*?</think>', '', response, flags=re.DOTALL).strip()
+
+print(response)

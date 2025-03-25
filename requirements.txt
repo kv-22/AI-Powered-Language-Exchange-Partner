@@ -3,3 +3,5 @@ langchain-core
 langgraph>0.2.27
 ollama
 openai-whisper
+groq
+langchain-groq

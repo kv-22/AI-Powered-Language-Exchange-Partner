@@ -3,11 +3,18 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import START, MessagesState, StateGraph
 from langchain_core.messages import trim_messages, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, FewShotChatMessagePromptTemplate
-
+from langchain_groq import ChatGroq
 
 # set llm 
-llm = ChatOllama(
-    model="llama3.2",
+# using ollama
+# llm = ChatOllama(
+#     model="llama3.2",
+#     temperature=0,
+# )
+
+# using groq
+llm = ChatGroq(
+    model="llama-3.3-70b-versatile", 
     temperature=0,
 )
 
