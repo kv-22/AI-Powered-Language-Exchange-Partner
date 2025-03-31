@@ -1,5 +1,7 @@
+import sqlite3
 from langchain_ollama import ChatOllama
-from langgraph.checkpoint.memory import MemorySaver
+# from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import START, MessagesState, StateGraph
 from langchain_core.messages import trim_messages, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, FewShotChatMessagePromptTemplate
@@ -80,18 +82,25 @@ def call_llm(state: MessagesState):
     response = llm.invoke(prompt) # call llm 
     return {"messages": response} # update state
 
-# add edge from start to model in graph
-workflow.add_edge(START, "model")
 
 # add model node with llm function in graph
 workflow.add_node("model", call_llm)
 
+# add edge from start to model in graph
+workflow.add_edge(START, "model")
+
+# to save a checkpoint and restart convo from it using sqlite db
+connection = sqlite3.connect("checkpoints.sqlite", check_same_thread=False)
+
 # compile graph and add memory checkpointer to save convo history
-memory = MemorySaver()
+memory = SqliteSaver(connection)
 app = workflow.compile(checkpointer=memory)
 
 # identity for conversation
 config = {"configurable": {"user_id": "user1", "thread_id": "1"}}
+
+# print(app.get_state(config))
+# print(memory.get(config))
 
 # chatbot loop
 while True:
@@ -111,3 +120,5 @@ while True:
     #     if isinstance(chunk, AIMessage):
     #         print(chunk.content, end="")
     
+# print(app.get_state(config))
+# print(memory.get(config))

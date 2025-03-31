@@ -6,10 +6,21 @@ import re
 
 user_input = input("\n: ")
 
+# prompt = f"""
+# Is the input grammatically correct?
+
+# Input: {user_input}
+# """
+
 prompt = f"""
-Is the input grammatically correct?
+You are an expert in English grammar. You are given a learner’s input.
+Based on the input, you need to identify grammatical errors in it.
+If there are no errors, you SHOULD NOT suggest alternatives.
+Give feedback to the learner on how they are doing.
+You SHOULD NOT answer questions that provide information other than grammar.
 
 Input: {user_input}
+Response:
 """
 
 # prompt = f"""
@@ -33,7 +44,7 @@ Input: {user_input}
 # Response:
 # """
 
-# print(prompt)
+print(prompt)
 
 messages = [
   {
