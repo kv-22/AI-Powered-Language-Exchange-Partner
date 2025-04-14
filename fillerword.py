@@ -84,11 +84,6 @@ messages = [
   }
 ]
 
-# with ollama
-# response: ChatResponse = chat(model='llama3.2', messages=messages)
-# print("\n")
-# print(response.message.content)
-
 # with groq
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 

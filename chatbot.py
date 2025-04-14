@@ -1,20 +1,15 @@
 import sqlite3
+import whisper
+from pydub import AudioSegment
 from langchain_ollama import ChatOllama
-# from langgraph.checkpoint.memory import MemorySaver
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import START, MessagesState, StateGraph
 from langchain_core.messages import trim_messages, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, FewShotChatMessagePromptTemplate
 from langchain_groq import ChatGroq
 
-# set llm 
-# using ollama
-# llm = ChatOllama(
-#     model="llama3.2",
-#     temperature=0,
-# )
 
-# using groq
+# set llm using groq
 llm = ChatGroq(
     model="llama-3.3-70b-versatile", 
     temperature=0,
@@ -96,24 +91,50 @@ connection = sqlite3.connect("checkpoints.sqlite", check_same_thread=False)
 memory = SqliteSaver(connection)
 app = workflow.compile(checkpointer=memory)
 
-# identity for conversation
-config = {"configurable": {"user_id": "user1", "thread_id": "1"}}
-
 # print(app.get_state(config))
 # print(memory.get(config))
 
-# chatbot loop
-while True:
-    user_input = input("\n: ")
-    if user_input == 'q':
-        break
+# convert to wav format
+# audio = AudioSegment.from_file("")
+# audio.export("output.wav", format="wav")
+
+def transcribe_audio(file_path):
+    model = whisper.load_model("base")
+    result = model.transcribe(audio=file_path, language='en')
+    return result["text"]
+
+# this should be called by endpoint
+def chat_with_llm(thread_id):
+    # transcribe audio
+    result = transcribe_audio("output.wav")
+    print("Transcribed Text: ", result)
+
+    # set identity for conversation
+    config = {"configurable": {"thread_id": thread_id}}
     
-    input_messages = [HumanMessage(user_input)]
+    input_messages = [HumanMessage(result)]
     
-    # for non streaming output
     output = app.invoke({"messages": input_messages}, config)
-    # print(output)
-    output["messages"][-1].pretty_print()
+    response = output["messages"][-1].content
+    
+    return response
+    
+# response = chat_with_llm(3)
+# print(response)
+
+
+# chatbot loop
+# while True:
+#     user_input = input("\n: ")
+#     if user_input == 'q':
+#         break
+    
+#     input_messages = [HumanMessage(user_input)]
+    
+#     # for non streaming output
+#     output = app.invoke({"messages": input_messages},  {"configurable": {"thread_id": 1}})
+#     # print(output)
+#     output["messages"][-1].pretty_print()
     
     # for streaming output
     # for chunk, metadata in app.stream({"messages": input_messages}, config, stream_mode="messages"): 

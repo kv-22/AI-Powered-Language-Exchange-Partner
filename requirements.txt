@@ -6,3 +6,4 @@ openai-whisper
 groq
 langchain-groq
 langgraph-checkpoint-sqlite
+sentence-transformers
