@@ -7,3 +7,4 @@ groq
 langchain-groq
 langgraph-checkpoint-sqlite
 sentence-transformers
+jiwer
