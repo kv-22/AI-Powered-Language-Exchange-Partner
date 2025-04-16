@@ -10,7 +10,7 @@ import torch
 def decode_phonemes(ids: torch.Tensor, processor: Wav2Vec2Processor, ignore_stress: bool = False) -> str:
     """CTC-like decoding. First removes consecutive duplicates, then removes special tokens."""
     # removes consecutive duplicates
-    ids = [id_ for id_, _ in groupby(ids)]
+    ids = [id_ for id_, _ in groupby(ids)] # ctc can repeat same phoneme because of alignment so remove duplicate
 
     special_token_ids = processor.tokenizer.all_special_ids + [
         processor.tokenizer.word_delimiter_token_id
@@ -36,7 +36,7 @@ sr = processor.feature_extractor.sampling_rate
 # load user audio file to get phoneme
 audio_array, _ = librosa.load("output.wav", sr=sr)
 
-inputs = processor(audio_array, return_tensors="pt", padding=True)
+inputs = processor(audio_array, return_tensors="pt", padding=True) # extract audio features
 
 with torch.no_grad():
     logits = model(inputs["input_values"]).logits

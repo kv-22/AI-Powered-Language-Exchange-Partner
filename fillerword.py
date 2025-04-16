@@ -1,6 +1,4 @@
 from pydub import AudioSegment
-from ollama import chat
-from ollama import ChatResponse
 from groq import Groq
 import os
 import whisper
@@ -65,7 +63,7 @@ for key, value in filtered_filler_words.items():
 fwer = sum(filtered_filler_words.values()) / len(result['text'].split()) * 100
 print(f"\nFiller Word Error Rate: {fwer:.2f}")
     
-# optional but getting feedback from llm about filler words in input
+# getting feedback from llm about filler words in input
 filler_words = ", ".join(key for key in filtered_filler_words.keys())
 
 prompt = f"""
@@ -84,17 +82,13 @@ messages = [
   }
 ]
 
-# with groq
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 chat_completion = client.chat.completions.create(
     messages=messages,
-    model="llama-3.3-70b-versatile" # "llama-3.3-70b-versatile or deepseek-r1-distill-llama-70b"
+    model="llama-3.3-70b-versatile"
 )
 
 response = chat_completion.choices[0].message.content
-
-# if using deepseek remove think tags
-# response = re.sub(r'<think>.*?</think>', '', response, flags=re.DOTALL).strip()
 
 print(response)
