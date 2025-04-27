@@ -1,10 +1,13 @@
 from groq import Groq
 from transformers import AutoProcessor, AutoModelForCTC, Wav2Vec2Processor
 from itertools import groupby
+from pydub import AudioSegment
 from jiwer import wer
 import os
 import librosa
 import torch
+
+client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 # decode model output
 def decode_phonemes(ids: torch.Tensor, processor: Wav2Vec2Processor, ignore_stress: bool = False) -> str:
@@ -27,72 +30,74 @@ def decode_phonemes(ids: torch.Tensor, processor: Wav2Vec2Processor, ignore_stre
 
     return prediction
 
-checkpoint = "bookbot/wav2vec2-ljspeech-gruut"
+def get_text():
+    text = "I work at PWC consulting firm"
+    return text
 
-model = AutoModelForCTC.from_pretrained(checkpoint)
-processor = AutoProcessor.from_pretrained(checkpoint)
-sr = processor.feature_extractor.sampling_rate
+def get_ref():
+    ref = "ˈaɪ w ˈɚ k ˈæ t p ˈi d ˈʌ b ə l j ˌu s ˈi k ə n s ˈʌ l t ɪ ŋ f ˈɚ m"
+    ref = ref.replace("ˈ", "").replace("ˌ", "") # remove stress mark
+    print(ref)
+    return ref
+    
+def get_per(model, processor, audio, ref):
+    sr = processor.feature_extractor.sampling_rate
 
-# load user audio file to get phoneme
-audio_array, _ = librosa.load("output.wav", sr=sr)
+    # load user audio file to get phoneme
+    audio_array, _ = librosa.load(audio, sr=sr)
 
-inputs = processor(audio_array, return_tensors="pt", padding=True) # extract audio features
+    inputs = processor(audio_array, return_tensors="pt", padding=True) # extract audio features
 
-with torch.no_grad():
-    logits = model(inputs["input_values"]).logits
+    with torch.no_grad():
+        logits = model(inputs["input_values"]).logits
 
-predicted_ids = torch.argmax(logits, dim=-1)
-prediction = decode_phonemes(predicted_ids[0], processor, ignore_stress=True) # remove ipa stress marks 
+    predicted_ids = torch.argmax(logits, dim=-1)
+    prediction = decode_phonemes(predicted_ids[0], processor, ignore_stress=True) # remove ipa stress marks 
 
-phonemes = prediction
-print(prediction)
+    phonemes = prediction
+    print(phonemes)
 
-text = "I work at PWC consulting firm"
-ref = "ˈaɪ w ˈɚ k ˈæ t p ˈi d ˈʌ b ə l j ˌu s ˈi k ə n s ˈʌ l t ɪ ŋ f ˈɚ m"
-ref = ref.replace("ˈ", "").replace("ˌ", "") # remove stress mark
-print(ref)
+    per = round(wer(ref, prediction) * 100, 2) # get phoneme error rate
+    print(per)
+    return phonemes, per
 
-per = round(wer(ref, prediction) * 100, 2) # get phoneme error rate
-print(per)
-
-# prompt = f"""
-# Briefly explain how the following text should be pronounced to improve pronunciation. Avoid writing phonemes in the explanation.
-
-# Text: {text}
-# """
-
-prompt = f"""
-Given the following text and the spoken phonemes, provide feedback on the pronunciation.
-For incorrect pronunciation, avoid writing phonemes in the feedback, instead, write how they should be pronounced in simple English.
+def get_pronunciation_feedback(text, phonemes):
+    prompt = f"""
+    Given the following text and the spoken phonemes, provide feedback on the pronunciation.
+    For incorrect pronunciation, avoid writing phonemes in the feedback, instead, write how they should be pronounced in simple English.
 
 
-Text: {text}
-Phonemes: {phonemes}
-"""
+    Text: {text}
+    Phonemes: {phonemes}
+    """
+    messages = [
+        {
+            "role": "user",
+            "content": prompt
+        }
+    ]
 
-# prompt = f"""
-# Given the following reference phonemes and the spoken phonemes, provide feedback on the pronunciation.
-# For incorrect pronunciation, avoid writing phonemes in the feedback, instead, write how they should be pronounced in simple English.
+    chat_completion = client.chat.completions.create(
+        messages=messages,
+        model="llama-3.3-70b-versatile"
+    )
 
+    response = chat_completion.choices[0].message.content
 
-# Reference phonemes: {ref}
-# Spoken phonemes: {phonemes}
-# """
+    print(response)
+    return response
 
-messages = [
-    {
-        "role": "user",
-        "content": prompt
-    }
-]
+# sample usage
+# convert an audio file to wav format
+# audio = AudioSegment.from_file("") # put audio file path
+# audio.export("output.wav", format="wav")
 
-client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
-
-chat_completion = client.chat.completions.create(
-    messages=messages,
-    model="llama-3.3-70b-versatile"
-)
-
-response = chat_completion.choices[0].message.content
-
-print(response)
+# text = get_text()
+# ref = get_ref()
+# phoneme_checkpoint = "bookbot/wav2vec2-ljspeech-gruut"
+# phoneme_model = AutoModelForCTC.from_pretrained(phoneme_checkpoint)
+# phoneme_processor = AutoProcessor.from_pretrained(phoneme_checkpoint)
+# phonemes, per = get_per(phoneme_model, phoneme_processor, "output.wav", ref) 
+# feedback = get_pronunciation_feedback(text, phonemes)
+# print("PER: ", per)
+# print("Feedback: ", feedback)
