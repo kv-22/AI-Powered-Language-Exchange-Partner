@@ -103,3 +103,16 @@ def chat_with_llm(thread_id, transcript):
 
 # sample usage
 # chat_with_llm("1", "") # change thread id for new conversation, transcript should be user input
+
+# sample usage as a chatbot
+# while True:
+#     user_input = input("\n: ")
+#     if user_input == 'q':
+#         break
+    
+#     input_messages = [HumanMessage(user_input)]
+    
+#     # for non streaming output
+#     output = app.invoke({"messages": input_messages},  {"configurable": {"thread_id": 2}})
+#     output["messages"][-1].pretty_print()
+    

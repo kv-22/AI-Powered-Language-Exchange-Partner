@@ -3,6 +3,7 @@ from transformers import AutoProcessor, AutoModelForCTC, Wav2Vec2Processor
 from itertools import groupby
 from pydub import AudioSegment
 from jiwer import wer
+from gruut import sentences
 import os
 import librosa
 import torch
@@ -87,6 +88,15 @@ def get_pronunciation_feedback(text, phonemes):
     print(response)
     return response
 
+# used to get reference phoneme from a given text
+# text = 'I work at pWC consulting firm'
+
+# for sent in sentences(text, lang="en-us"):
+#     for word in sent:
+#         if word.phonemes:
+#           print(*word.phonemes)
+          
+          
 # sample usage
 # convert an audio file to wav format
 # audio = AudioSegment.from_file("") # put audio file path
