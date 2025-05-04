@@ -5,7 +5,7 @@ This project explores building an AI-Powered language exchange partner applicati
 The working of each factor can be found in the following files and tried by uncommenting the "sample usage":
 
 - chatbot.py: for grammar checking assistant with LangChain
-- filler_words.py: for flunecy assessment based on predefined filler words
+- filler_words.py: for fluency assessment based on predefined filler words
 - pronunciation.py: for pronunciation assessment using Wave2Vec2
 - content.py: for assessment based on a topic using all-MiniLM-L6-v2
 
