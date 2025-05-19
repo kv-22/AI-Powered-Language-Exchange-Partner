@@ -43,6 +43,7 @@ def get_fwer(transcript):
         
     # calculate fwer
     fwer = sum(filtered_filler_words.values()) / len(transcript.split()) * 100
+    fwer = round(fwer, 2)
     print(f"\nFiller Word Error Rate: {fwer:.2f}")
     filler_words_str = ", ".join(key for key in filtered_filler_words.keys())
     return fwer, filler_words_str
