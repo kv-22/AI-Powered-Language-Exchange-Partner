@@ -1,13 +1,9 @@
 import sqlite3
-import whisper
-from pydub import AudioSegment
-from langchain_ollama import ChatOllama
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import START, MessagesState, StateGraph
 from langchain_core.messages import trim_messages, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, FewShotChatMessagePromptTemplate
 from langchain_groq import ChatGroq
-
 
 # set llm using groq
 llm = ChatGroq(
@@ -54,6 +50,7 @@ prompt_template = ChatPromptTemplate.from_messages(
         (
             "system",
             """You are an expert in English grammar. You are given a learner’s input.
+            The input is transcribed speech, hence you SHOULD NOT correct punctuation.
             Based on the input, you need to identify grammatical errors in it.
             If there are no errors, you SHOULD NOT suggest alternatives.
             Give feedback to the learner on how they are doing.
@@ -91,39 +88,23 @@ connection = sqlite3.connect("checkpoints.sqlite", check_same_thread=False)
 memory = SqliteSaver(connection)
 app = workflow.compile(checkpointer=memory)
 
-# print(app.get_state(config))
-# print(memory.get(config))
-
-# convert to wav format
-# audio = AudioSegment.from_file("")
-# audio.export("output.wav", format="wav")
-
-def transcribe_audio(file_path):
-    model = whisper.load_model("base")
-    result = model.transcribe(audio=file_path, language='en')
-    return result["text"]
-
-# this should be called by endpoint
-def chat_with_llm(thread_id):
-    # transcribe audio
-    result = transcribe_audio("output.wav")
-    print("Transcribed Text: ", result)
-
+def chat_with_llm(thread_id, transcript):
+    print("t: ", thread_id)
     # set identity for conversation
     config = {"configurable": {"thread_id": thread_id}}
     
-    input_messages = [HumanMessage(result)]
+    input_messages = [HumanMessage(transcript)]
     
     output = app.invoke({"messages": input_messages}, config)
+    print(output)
     response = output["messages"][-1].content
     
     return response
-    
-# response = chat_with_llm(3)
-# print(response)
 
+# sample usage
+# chat_with_llm("1", "") # change thread id for new conversation, transcript should be user input
 
-# chatbot loop
+# sample usage as a chatbot
 # while True:
 #     user_input = input("\n: ")
 #     if user_input == 'q':
@@ -132,14 +113,6 @@ def chat_with_llm(thread_id):
 #     input_messages = [HumanMessage(user_input)]
     
 #     # for non streaming output
-#     output = app.invoke({"messages": input_messages},  {"configurable": {"thread_id": 1}})
-#     # print(output)
+#     output = app.invoke({"messages": input_messages},  {"configurable": {"thread_id": 2}})
 #     output["messages"][-1].pretty_print()
     
-    # for streaming output
-    # for chunk, metadata in app.stream({"messages": input_messages}, config, stream_mode="messages"): 
-    #     if isinstance(chunk, AIMessage):
-    #         print(chunk.content, end="")
-    
-# print(app.get_state(config))
-# print(memory.get(config))
